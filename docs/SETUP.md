@@ -66,12 +66,19 @@ It runs `claude mcp add --scope user fl-studio -- <python> <server.py>` and adds
 
 Other MCP clients: point them at `<python> server/server.py` (stdio transport).
 
-## 5. Try it
+## 5. Optional: local AI (Ollama)
+
+1. Install [Ollama](https://ollama.com) and pull a model: `ollama pull qwen3-vl:8b-instruct` (about 6 GB; it reads pictures and writes ideas). Any chat model works for `fl_local_idea`; set `local_ai.idea_model` and `vision_model` in `config.json` to use others.
+2. That's all. The bridge starts Ollama when a local AI tool needs it, and stops it about 2 minutes after FL closes, but only if the bridge started it. Change this with `local_ai.auto_start` and `local_ai.auto_stop_after_fl_closed_seconds`, or turn the local AI off with `local_ai.enabled: false`.
+
+## 6. Try it
 
 Ask Claude: *"Check the FL Studio connection"*, then *"Set the tempo to 140 and make a 4-bar hi-hat pattern on
 channel 1"*.
 
 ## Troubleshooting
+
+**First, run the doctor:** ask Claude *"run fl_doctor"*, or run `python tools\doctor.py`. It checks each link in order (settings, FL program, MIDI ports, FL scripts, FL running, the bridge answering, popups, scaling, hooks, local AI) and prints the fix for the first thing that's wrong. It only reads; it changes nothing.
 
 | Symptom | Fix |
 |---|---|

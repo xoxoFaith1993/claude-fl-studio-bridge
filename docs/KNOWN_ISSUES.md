@@ -13,6 +13,10 @@ The honest list. It's a work in progress, and fixes are welcome.
 - The piano roll script reads and writes its request files in `Documents\Image-Line\FL Studio\...`. If you
   moved FL's user data folder, notes may not arrive: copy the script there by hand and open an issue.
 
+- **Microsoft Store / Python Install Manager Pythons** see a private copy of `%APPDATA%`. If you run the bridge
+  from source with one, its settings and logs may land somewhere else, and `fl_doctor` warns about it. The installer
+  bundles its own Python, which avoids this.
+
 ## Click-based tools (no API in FL for these)
 - **Fixed positions** in the Export window, File menu and piano roll toolbar were measured at 100% scaling
   ([CALIBRATION.md](CALIBRATION.md)).
@@ -38,6 +42,14 @@ The honest list. It's a work in progress, and fixes are welcome.
   bridge clicks it for you.
 - Starting FL from Claude's shell would tie FL's life to Claude's, so the bridge starts FL through Explorer
   with a temporary shortcut.
+
+## Local AI (optional)
+- Small local models are good at mood and shape, weak at theory. That's why `fl_local_idea` fixes every idea and refuses one with clashes left; try another `seed` if it refuses.
+- Vision models read dialog text well but guess click positions roughly, so treat their button points as hints.
+- The model has to be pulled once (`ollama pull ...`). Loading it takes a few seconds and several GB of memory, which is why Ollama only runs while you use these tools.
+
+- **Both bridges share one Ollama safely:** the watcher waits until FL Studio *and* Krita are closed before it
+  stops an Ollama it started, and it never stops one it didn't start (it checks the exact process).
 
 ## Safety
 - `fl_exec` runs any Python inside FL. That's by design: it's local only, through your own virtual ports.

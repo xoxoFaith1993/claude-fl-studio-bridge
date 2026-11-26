@@ -161,6 +161,11 @@ def render(fl, project=None, formats=('wav',), out_dir=None, name=None, unsaved=
     if not os.path.isfile(project):
         raise FileNotFoundError('No saved project to render: pass project=<.flp>, or save the open one first')
     if running:                                     # the command-line render only works with FL closed
+        try:
+            import ollama_ctl                       # tell the optional Ollama watcher this close is a restart
+            ollama_ctl.mark_fl_restart()
+        except Exception:
+            pass
         flhands.close_fl(fl, unsaved)
         time.sleep(1)
     t0 = time.time()

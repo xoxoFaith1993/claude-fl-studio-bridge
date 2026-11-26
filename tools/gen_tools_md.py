@@ -29,8 +29,8 @@ def build():
     lines = ['# Tools', '',
              'Generated from `server/server.py` by `tools/gen_tools_md.py` (%d tools). Required arguments are in **bold**.'
              % len(server.TOOLS), '',
-             'Channels are 0-based, patterns 1-based, mixer track 0 is Master. Tools marked *quiet* only read, '
-             'so they never show the "hands off" banner.', '',
+             'Channels are 0-based, patterns 1-based, mixer track 0 is Master. Tools marked *quiet* don\'t click inside FL '
+             '(they read, or only play/stop), so they never show the "hands off" banner.', '',
              '| Tool | Arguments | What it does |', '|---|---|---|']
     for name, desc, props, req, _ in server.TOOLS:
         quiet = ' *(quiet)*' if name in server.QUIET else ''

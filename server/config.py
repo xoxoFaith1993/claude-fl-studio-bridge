@@ -47,9 +47,18 @@ DEFAULTS = {
     },
     # colour given to channels / inserts the bridge creates
     'new_item_color': '#C8283C',
-    # optional local vision model for fl_read_window (Ollama)
+    # optional local AI (Ollama): fl_read_window, fl_local_idea, and reading stuck dialogs for fl_doctor
     'ollama_host': 'http://localhost:11434',
-    'vision_model': 'qwen3-vl:8b-instruct',
+    'vision_model': 'qwen3-vl:8b-instruct',     # reads FL dialogs (needs a vision model)
+    'local_ai': {
+        'enabled': True,                       # false = never use Ollama, even if it is installed
+        'auto_start': True,                    # start `ollama serve` when a tool needs it
+        'auto_stop_after_fl_closed_seconds': 120,   # stop it again (only if the bridge started it); 0 = never
+        'ollama_exe': None,                    # null = auto-detect (PATH, %LOCALAPPDATA%\\Programs\\Ollama)
+        'serve_env': {},                       # extra env vars for `ollama serve`, e.g. {"OLLAMA_MODELS": "<models folder>"}
+        'idea_model': 'qwen3-vl:8b-instruct',  # writes musical ideas for fl_local_idea (any chat model works)
+        'read_stuck_dialogs': True,            # when FL is blocked by a popup, read it with vision_model and say what it is
+    },
     # pixel positions inside FL windows, measured on FL Studio 2026 (26.1) at 100% scaling.
     # If a hands-off tool misses its target on your PC, re-measure with fl_snapshot and change it here.
     # See docs/CALIBRATION.md.

@@ -32,9 +32,19 @@ you can see and change everything it did. It's a two-way bridge, not a one-shot 
   and keys are posted to FL's own windows only. Your real mouse doesn't move and other apps aren't hidden.
   While Claude clicks inside FL, a banner reminds you to keep your hands off (default text:
   *"Chill bro, let me solo her..."*; change it or turn it off in `config.json`).
+- **A built-in doctor:** `fl_doctor` (or `python tools\doctor.py`) checks every link from Claude to FL: MIDI
+  ports, the FL scripts, FL itself, port settings, popups, screen scaling, hooks and the local AI. It says in plain
+  words what's wrong and how to fix it, so a problem gets explained instead of the bridge just timing out.
+- **Optional local AI (Ollama), fully offline:**
+  - `fl_local_idea`: a local model writes a piano idea, and music-theory code fixes it before anything reaches FL
+    (in-key chords, smooth voicing, melody on chord tones, no clashing notes).
+  - `fl_read_window`: a local vision model reads FL popups.
+  - When FL is stuck on a popup, the bridge reads it and tells Claude what it says.
+  - Ollama starts only when one of these tools needs it, and stops again after FL closes. It only stops an
+    Ollama the bridge started itself.
 - **Anything else:** `fl_exec` runs Python inside FL with all of FL's scripting modules.
 
-The full list of 38 tools is in [docs/TOOLS.md](docs/TOOLS.md).
+The full list of 40 tools is in [docs/TOOLS.md](docs/TOOLS.md).
 
 ## How it works (short version)
 
@@ -59,7 +69,7 @@ clicks to FL's windows and checking the result. More detail, and how to add a to
 | [Claude Code](https://claude.com/claude-code) or another MCP client | | |
 | Python 3.10+ | bundled by the installer | the server uses only the standard library |
 
-Optional extras: [Ollama](https://ollama.com) with a vision model for `fl_read_window`, `numpy` for the
+Optional extras: [Ollama](https://ollama.com) with a model such as `qwen3-vl:8b-instruct` for the local AI tools (`fl_local_idea`, `fl_read_window`, reading stuck popups), `numpy` for the
 render loudness check, and Spitfire's free BBC Symphony Orchestra Discover for the `fl_bbcso_*` tools.
 Licences and links for each are in [docs/PREREQUISITES.md](docs/PREREQUISITES.md).
 
@@ -91,8 +101,8 @@ Then do the MIDI and FL steps in [docs/SETUP.md](docs/SETUP.md). To build the in
 ### Check it works
 
 Start a new Claude Code session and ask: *"Check the FL Studio connection."* Claude calls `fl_status` and
-should report your tempo and channel count. If it times out, see
-[docs/SETUP.md#troubleshooting](docs/SETUP.md#troubleshooting).
+should report your tempo and channel count. If anything fails, ask *"Run the FL doctor"* (or run
+`python tools\doctor.py`): it checks each step and tells you the fix.
 
 ## Settings
 

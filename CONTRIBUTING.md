@@ -30,7 +30,7 @@ Please don't post `.flp` projects or audio you don't want public.
 - **Nothing machine-specific in code:** paths, port names and pixel positions go in `server/config.py`
   (`DEFAULTS`, with a comment).
 - New or changed tool: run `python tools\gen_tools_md.py` so `docs/TOOLS.md` stays current.
-- Run `python tests\test_loopback.py` before a PR. Say in the PR what you tested by hand in FL, and on which
+- Run `python tests\test_loopback.py`, `tests\test_doctor.py` and `tests\test_musicgen.py` before a PR. If you add a way things can break, add a check to `server/doctor.py` with a plain fix line. Say in the PR what you tested by hand in FL, and on which
   version.
 - Style: keep functions small and comments plain. Match the code around you.
 

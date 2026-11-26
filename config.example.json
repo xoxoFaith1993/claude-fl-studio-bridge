@@ -12,6 +12,14 @@
     "color": "#C8283C"
   },
   "new_item_color": "#C8283C",
+  "vision_model": "qwen3-vl:8b-instruct",
+  "local_ai": {
+    "enabled": true,
+    "auto_start": true,
+    "auto_stop_after_fl_closed_seconds": 120,
+    "idea_model": "qwen3-vl:8b-instruct",
+    "read_stuck_dialogs": true
+  },
   "calibration": {
     "piano_roll_tools_icon": [37, 14]
   }

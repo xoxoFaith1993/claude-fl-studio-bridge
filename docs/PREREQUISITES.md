@@ -12,8 +12,8 @@ current terms.
 | Claude Code (Anthropic), or any MCP client | yes | proprietary | no | [claude.com/claude-code](https://claude.com/claude-code) |
 | Python (PSF) | bundled by the installer | PSF License v2 (redistribution allowed; the licence file ships inside `python\`) | yes | [python.org](https://www.python.org/downloads/windows/) |
 | numpy | optional (render loudness check) | BSD-3-Clause | yes | `pip install numpy` |
-| Ollama | optional (`fl_read_window`) | MIT | yes | [ollama.com](https://ollama.com) |
-| qwen3-vl (Alibaba Qwen) vision model | optional, used with Ollama | Apache-2.0 (per the Qwen3-VL-8B-Instruct model card) | open weights | `ollama pull qwen3-vl:8b-instruct` |
+| Ollama | optional local AI (`fl_local_idea`, `fl_read_window`, reading stuck popups) | MIT | yes | [ollama.com](https://ollama.com) |
+| qwen3-vl (Alibaba Qwen) vision model (default; any Ollama model can be set instead) | optional, used with Ollama | Apache-2.0 (per the Qwen3-VL-8B-Instruct model card) | open weights | `ollama pull qwen3-vl:8b-instruct` |
 | BBC Symphony Orchestra Discover (Spitfire Audio) | optional (`fl_bbcso_*`) | proprietary, free of charge (Spitfire account needed) | no | [spitfireaudio.com](https://www.spitfireaudio.com/bbc-symphony-orchestra-discover/) |
 | Inno Setup | only to build the installer | Inno Setup License (free for any use; commercial users are asked to buy a licence) | source available | [jrsoftware.org](https://jrsoftware.org/isinfo.php) |
 

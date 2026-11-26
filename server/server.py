@@ -27,7 +27,7 @@ import knobtable  # noqa: E402
 import overlay  # noqa: E402
 
 # tools that only read or play: no 'hands off' banner for these
-QUIET = {'fl_status', 'fl_mixer_get', 'fl_channels_get', 'fl_patterns_get', 'fl_browser_list', 'fl_bbcso_list',
+QUIET = {'fl_status', 'fl_doctor', 'fl_mixer_get', 'fl_channels_get', 'fl_patterns_get', 'fl_browser_list', 'fl_bbcso_list',
          'fl_plugin_params', 'fl_mixer_effects', 'fl_windows', 'fl_snapshot', 'fl_api', 'fl_write_midi',
          'fl_read_window', 'fl_transport'}
 
@@ -50,10 +50,12 @@ def fl(body, **args):
         except Exception:
             ds = []
         if ds and 'No reply' in str(e):
-            raise BridgeError('FL is blocked by a dialog: %s. Use fl_windows / fl_read_window / fl_click / fl_key '
-                              'to answer it.' % ', '.join('"%s" (%s, hwnd %s)' % (d['title'], d['class'], d['hwnd'])
-                                                         for d in ds))
-        raise
+            msg = 'FL is blocked by a dialog: %s. Use fl_windows / fl_snapshot / fl_click / fl_key to answer it.' % (
+                ', '.join('"%s" (%s, hwnd %s)' % (d['title'], d['class'], d['hwnd']) for d in ds))
+            import doctor
+            seen = doctor.read_dialog(ds[0])          # optional local vision model says what the popup is
+            raise BridgeError(msg + (' The local model reads it as: ' + seen if seen else ''))
+        raise BridgeError(str(e) + '\n\nRun fl_doctor for a step-by-step check of the setup.')
     return value if not output else {'result': value, 'printed': output}
 
 
@@ -548,6 +550,8 @@ def automation(a):
     act = a['action']
     if act == 'create_volume':
         return automation_clip.create_volume_clip(fl, a.get('mixer_track', 0))
+    if act == 'create_pan':
+        return automation_clip.create_pan_clip(fl, a.get('mixer_track', 0))
     if act == 'sidechain':
         keys = ('bars', 'duck_db', 'every_beats', 'release_beats', 'start_bar', 'offset_beats', 'hold_beats',
                 'attack_beats', 'top_db', 'release_curve', 'hits')
@@ -562,12 +566,44 @@ def automation(a):
     raise ValueError('unknown action')
 
 
+def local_idea(a):
+    """Optional local copilot: the local model writes the idea, musicgen fixes the theory, the notes go to FL."""
+    import musicgen
+    model = a.get('model') or musicgen.MODEL
+    idea = musicgen.ask(a['request'], model, a.get('seed'))
+    song = musicgen.arrange(idea)
+    rubs = musicgen.check(song['notes'])
+    out = {'title': song['title'], 'key': song['key'], 'bpm': song['bpm'], 'chords': song['chords'],
+           'bars': song['bars'], 'notes': len(song['notes']), 'theory_fixes': song['fixes'], 'clashes_left': rubs,
+           'model': model}
+    if rubs:
+        out['written'] = False
+        out['why'] = 'semitone clashes were left after fixing, so nothing was written (try another seed)'
+        return out
+    if not a.get('write', True):
+        out['written'] = False
+        out['notes_list'] = song['notes']
+        return out
+    ch = a.get('channel')
+    if ch is None:
+        ch = fl('result = channels.selectedChannel()')
+    if a.get('set_tempo', True):
+        fl(SET_TEMPO, bpm=song['bpm'])
+    r = pianoroll.write(fl, {'channel': ch, 'notes': song['notes'], 'mode': a.get('mode', 'replace')})
+    out.update({'written': True, 'channel': ch, 'piano_roll': r})
+    if a.get('play'):
+        fl(TRANSPORT, action='play', loop_mode='pattern')
+    return out
+
+
 NUM = {'type': 'number'}
 INT = {'type': 'integer'}
 BOOL = {'type': 'boolean'}
 STR = {'type': 'string'}
 
 TOOLS = [
+    ('fl_doctor', 'Check every link from Claude to FL Studio and say what is wrong and how to fix it: settings, FL program, virtual MIDI ports, FL scripts installed and up to date, FL running (one copy), the bridge answering, a popup blocking FL (read by the local vision model if available), FL features, screen scaling, banner hooks, optional local AI (Ollama + models). Read-only. Use it first when any tool fails or times out, and give the user the fix lines in plain words.',
+     {}, [], lambda a: __import__('doctor').diagnose(bridge)),
     ('fl_status', 'Get FL Studio state: playing, tempo, loop mode, song position, counts of patterns/channels/mixer tracks. Use first to check the connection.',
      {}, [], lambda a: fl(STATUS)),
     ('fl_transport', 'Control playback: play, pause, stop, toggle_play, record. Optionally switch loop_mode (pattern/song) or jump to position (0..1 of song). record answers FL\'s "What would you like to record?" box itself (record_what, default notes_automation).',
@@ -651,6 +687,9 @@ TOOLS = [
     ('fl_read_window', 'Optional (needs Ollama with a vision model). Ask the local vision model (default qwen3-vl, offline) what an FL window shows: title, message and buttons with click points in window pixels. Default target = top dialog, else main window. ~10-20 s.',
      {'target': {'type': ['string', 'integer']}}, [],
      lambda a: ollama_eyes.read_window(target_arg(a) if a.get('target') is not None else None)),
+    ('fl_local_idea', 'Optional local copilot (needs Ollama): the local model (local_ai.idea_model) writes a short piano idea for request (mood, key, tempo, chords, melody); music-theory code then fixes it (in-key triads, smooth voicing, melody on chord tones, no semitone clashes - refuses if any are left) and writes it into a channel\'s piano roll (default the selected channel; mode replace/add), sets the tempo (set_tempo, default true) and optionally plays it. write=false only returns the notes. Works offline. ~20-40 s.',
+     {'request': STR, 'channel': INT, 'mode': {'type': 'string', 'enum': ['replace', 'add']}, 'set_tempo': BOOL,
+      'play': BOOL, 'write': BOOL, 'seed': INT, 'model': STR}, ['request'], local_idea),
     ('fl_project', 'Projects without Open/Save dialogs. new: copy an FL template (default "Empty": no stock channels) to <projects_dir>\\<name>\\<name>.flp (projects_dir from config.json; default Documents\\Image-Line\\FL Studio\\Projects; or pass folder) and open it, so fl_save then saves there. open: open a .flp (restarts FL cleanly). close / start FL. templates: list template names. unsaved: refuse (default) / save / discard when FL has unsaved changes.',
      {'action': {'type': 'string', 'enum': ['new', 'open', 'close', 'start', 'templates']}, 'name': STR, 'path': STR,
       'template': STR, 'folder': STR, 'unsaved': {'type': 'string', 'enum': ['refuse', 'save', 'discard']}},

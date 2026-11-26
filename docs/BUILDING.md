@@ -45,6 +45,7 @@ next to the download on python.org.
 ```powershell
 .\dist\Claude-FL-Studio-Bridge-Setup-0.1.0.exe /VERYSILENT /CURRENTUSER /DIR="$env:TEMP\flb-test" /TASKS=""
 & "$env:TEMP\flb-test\python\python.exe" "$env:TEMP\flb-test\tests\test_loopback.py"
+& "$env:TEMP\flb-test\python\python.exe" "$env:TEMP\flb-test\tests\test_doctor.py"
 & "$env:TEMP\flb-test\unins000.exe" /VERYSILENT
 ```
 

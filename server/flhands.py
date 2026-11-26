@@ -570,6 +570,11 @@ def open_project(fl, path, unsaved='refuse'):
     path = os.path.abspath(path)
     if not os.path.isfile(path):
         raise FileNotFoundError(path)
+    try:  # tell the optional Ollama watcher this close is a restart, so the local model stays up
+        import ollama_ctl
+        ollama_ctl.mark_fl_restart()
+    except Exception:
+        pass
     close_fl(fl, unsaved)
     time.sleep(1)
     launch(path)

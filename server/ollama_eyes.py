@@ -15,7 +15,8 @@ import urllib.request
 import config
 import flhands
 
-OLLAMA = str(config.get('ollama_host')).rstrip('/')
+import ollama_ctl
+OLLAMA = ollama_ctl.OLLAMA          # normalized ('0.0.0.0:11434' -> 'http://127.0.0.1:11434')
 MODEL = os.environ.get('FL_EYES_MODEL') or config.get('vision_model')
 
 PROMPT = ('This is a screenshot of one window from FL Studio (a music program). Reply with JSON only: '
@@ -26,11 +27,12 @@ PROMPT = ('This is a screenshot of one window from FL Studio (a music program). 
 
 
 def ask(png_path, prompt=PROMPT, model=MODEL, timeout=120):
-    try:
-        urllib.request.urlopen(OLLAMA + '/api/version', timeout=2).read()
-    except Exception:
-        raise RuntimeError('Ollama is not running at %s. fl_read_window is optional: install Ollama, run '
-                           '"ollama pull %s", or use fl_snapshot instead.' % (OLLAMA, model))
+    import ollama_ctl
+    if not ollama_ctl.ensure_running():
+        raise RuntimeError('Ollama is not running at %s and could not be started. The local AI is optional: install '
+                           'Ollama (ollama.com), run "ollama pull %s", or use fl_snapshot instead.' % (OLLAMA, model))
+    if not ollama_ctl.has_model(model):
+        raise RuntimeError('Ollama has no "%s" model yet. Run: ollama pull %s' % (model, model))
     with open(png_path, 'rb') as f:
         img = base64.b64encode(f.read()).decode('ascii')
     body = {'model': model, 'stream': False, 'format': 'json', 'keep_alive': '10m',
