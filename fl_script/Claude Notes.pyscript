@@ -1,0 +1,77 @@
+"""Claude Notes - piano roll script for the Claude bridge.
+
+Reads queued requests from claude_notes_request.json (next to this script), applies them to the
+open piano roll, then writes the piano roll's notes to claude_notes_state.json.
+The bridge runs it through the piano roll's Tools > Scripts menu (posted clicks, FL can stay in the
+background); if that fails it falls back to Ctrl+Alt+Y ("Run last script again").
+The files live in Documents\\Image-Line\\FL Studio\\Settings\\Piano roll scripts (FL's default user data folder).
+
+Request file: a list of {"action": ...} objects, times and lengths in beats (quarter notes):
+  {"action": "clear"}
+  {"action": "add", "notes": [{"pitch": 60, "start": 0, "length": 1, "velocity": 0.8}]}
+"""
+import json
+import os
+
+import flpianoroll as flp
+
+HERE = os.path.join(os.path.expanduser('~'), 'Documents', 'Image-Line', 'FL Studio', 'Settings', 'Piano roll scripts')
+REQUEST = os.path.join(HERE, 'claude_notes_request.json')
+STATE = os.path.join(HERE, 'claude_notes_state.json')
+
+
+def _apply(requests):
+    ppq = flp.score.PPQ
+    added = cleared = 0
+    for req in requests:
+        action = req.get('action')
+        if action == 'clear':
+            cleared += flp.score.noteCount
+            for i in range(flp.score.noteCount - 1, -1, -1):
+                flp.score.deleteNote(i)
+        elif action == 'add':
+            for n in req.get('notes', []):
+                note = flp.Note()
+                note.number = int(n['pitch'])
+                note.time = int(round(float(n.get('start', 0)) * ppq))
+                note.length = max(1, int(round(float(n.get('length', 1)) * ppq)))
+                vel = n.get('velocity', 0.8)
+                note.velocity = vel / 127.0 if vel > 1 else float(vel)
+                if 'pan' in n:
+                    note.pan = float(n['pan'])
+                if 'slide' in n:
+                    note.slide = bool(n['slide'])
+                flp.score.addNote(note)
+                added += 1
+    return added, cleared
+
+
+def _state(status):
+    ppq = flp.score.PPQ
+    notes = []
+    for i in range(flp.score.noteCount):
+        n = flp.score.getNote(i)
+        notes.append({'pitch': n.number, 'start': n.time / ppq, 'length': n.length / ppq,
+                      'velocity': round(n.velocity, 3)})
+    status.update({'ppq': ppq, 'note_count': len(notes), 'notes': notes})
+    with open(STATE, 'w') as f:
+        json.dump(status, f)
+
+
+def run():
+    status = {'ok': True, 'added': 0, 'cleared': 0}
+    try:
+        requests = []
+        if os.path.exists(REQUEST):
+            with open(REQUEST) as f:
+                requests = json.load(f) or []
+            with open(REQUEST, 'w') as f:
+                f.write('[]')
+        status['request_id'] = requests[0].get('id') if requests else None
+        status['added'], status['cleared'] = _apply(requests)
+    except Exception as e:
+        status = {'ok': False, 'error': '%s: %s' % (type(e).__name__, e)}
+    _state(status)
+
+
+run()

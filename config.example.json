@@ -1,0 +1,18 @@
+{
+  "_comment": "Copy to %APPDATA%\\claude-fl-studio-bridge\\config.json and keep only the lines you want to change. Run 'python server\\config.py' to see what the bridge uses.",
+  "fl_exe": "C:\\Program Files\\Image-Line\\FL Studio 2025\\FL64.exe",
+  "projects_dir": "%USERPROFILE%\\Music\\FL Projects",
+  "port_to_fl": "Claude to FL",
+  "port_from_fl": "FL to Claude",
+  "banner": {
+    "enabled": true,
+    "text": "Chill bro, let me solo her...",
+    "subtext": "Claude is working in FL Studio - hands off the mouse and keys",
+    "hold_seconds": 90,
+    "color": "#C8283C"
+  },
+  "new_item_color": "#C8283C",
+  "calibration": {
+    "piano_roll_tools_icon": [37, 14]
+  }
+}

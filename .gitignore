@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+# build output
+dist/
+installer/build/
+# local settings and generated files (they live in %APPDATA% / %LOCALAPPDATA%, but just in case)
+config.json
+kit.json
+snaps/
+midi/
+*.log
+*.flp
+*.wav
+*.mp3

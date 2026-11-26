@@ -1,0 +1,30 @@
+name: Setup report (it works / it doesn't on my PC)
+description: Tell us how the bridge runs on your setup - successes help as much as failures
+labels: [setup-report]
+body:
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options: [Everything works, Mostly works, Doesn't connect]
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App version
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and display scaling
+  - type: dropdown
+    id: midi
+    attributes:
+      label: Virtual MIDI ports (FL bridge only)
+      options: [loopMIDI, Windows MIDI Services loopback, other, not applicable]
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes (which tools worked, which didn't, calibration values you changed)

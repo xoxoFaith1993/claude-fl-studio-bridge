@@ -1,0 +1,12 @@
+{
+  "_comment": "Your drum kit for fl_drum_kit. Copy to %APPDATA%\\claude-fl-studio-bridge\\kit.json. 'browser' = the sample's path in FL's Browser (ask Claude to run fl_browser_list to find it). 'steps' = starter pattern, x = hit, repeated to 64 steps.",
+  "color": "#C8283C",
+  "zero_db_faders": true,
+  "channels": [
+    {"label": "Kick",  "browser": ["Packs", "Drums", "Kicks", "Kick 01.wav"],   "insert": 4, "steps": "x---------------"},
+    {"label": "Snare", "browser": ["Packs", "Drums", "Snares", "Snare 01.wav"], "insert": 3, "steps": "--------x-------"},
+    {"label": "Hat",   "browser": ["Packs", "Drums", "Hats", "Hat 01.wav"],     "insert": 2, "steps": "x-x-x-x-x-x-x-x-"},
+    {"label": "Crash", "browser": ["Packs", "Drums", "Crashes", "Crash 01.wav"], "insert": 5, "steps": "x---------------------------------------------------------------"}
+  ],
+  "insert_names": {"2": "Hats", "3": "Snare", "4": "Kick", "5": "Crash"}
+}
