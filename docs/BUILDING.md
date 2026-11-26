@@ -21,7 +21,7 @@ Output: `dist\Claude-FL-Studio-Bridge-Setup-<version>.exe` plus a `.sha256` file
 
 What it does:
 1. downloads `python-<ver>-embed-amd64.zip` into `installer\build\` (cached) and verifies it,
-2. copies an **allow-list** of folders and files (`server`, `fl_script`, `tools`, `docs`, `tests`, README, LICENSE,
+2. copies an **allow-list** of folders and files (`server`, `fl_script`, `tools`, `docs`, `tests`, `examples`, README, LICENSE,
    CHANGELOG, the example configs) into `installer\build\stage-fl`, so nothing else in your working copy
    can end up in the installer,
 3. unpacks Python into `stage-fl\python`,

@@ -1,0 +1,18 @@
+{
+  "_comment": "Neutral example for fl_muse_render: a 4-bar string chorale in C major (I - IV - V - I), whole notes. Ask Claude: 'render examples/muse_chorale.json with Muse Sounds'.",
+  "name": "Example chorale",
+  "bpm": 72,
+  "time_signature": [4, 4],
+  "mode": "stems",
+  "parts": [
+    {"instrument": "violin", "dynamic": "mp", "notes": [
+      {"pitch": 76, "start": 0, "length": 4}, {"pitch": 77, "start": 4, "length": 4},
+      {"pitch": 74, "start": 8, "length": 4}, {"pitch": 72, "start": 12, "length": 4}]},
+    {"instrument": "viola", "dynamic": "mp", "notes": [
+      {"pitch": 67, "start": 0, "length": 4}, {"pitch": 69, "start": 4, "length": 4},
+      {"pitch": 71, "start": 8, "length": 4}, {"pitch": 67, "start": 12, "length": 4}]},
+    {"instrument": "cello", "dynamic": "mp", "notes": [
+      {"pitch": 48, "start": 0, "length": 4}, {"pitch": 41, "start": 4, "length": 4},
+      {"pitch": 43, "start": 8, "length": 4}, {"pitch": 48, "start": 12, "length": 4}]}
+  ]
+}

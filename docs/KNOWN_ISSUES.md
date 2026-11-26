@@ -51,6 +51,18 @@ The honest list. It's a work in progress, and fixes are welcome.
 - **Both bridges share one Ollama safely:** the watcher waits until FL Studio *and* Krita are closed before it
   stops an Ollama it started, and it never stops one it didn't start (it checks the exact process).
 
+## Muse Sounds route
+- MuseScore assigns Muse Sounds itself (`--sound-profile MuseSounds`); if an instrument comes out as a basic
+  sound, open the `.mscz` next to the WAV in MuseScore, pick the Muse Sounds instrument once and save.
+- One line per part: notes starting together keep only the top note, and overlapping notes are shortened. Write
+  chords as separate parts.
+- Renders follow the written tempo map exactly; cut clips on that timeline (the tool does), not by onset detection.
+
+## Reference Ears
+- Heavy: the first run on a song splits it on the CPU (several minutes), and the listening AI needs a ~20 GB model.
+- Tempo can come out at half or double, the key can show as its relative major/minor, and chords are rough on
+  dense or distorted mixes.
+
 ## Safety
 - `fl_exec` runs any Python inside FL. That's by design: it's local only, through your own virtual ports.
 - The bridge never saves unless asked, and `fl_drum_kit` never overwrites inserts, steps or EQ you set.

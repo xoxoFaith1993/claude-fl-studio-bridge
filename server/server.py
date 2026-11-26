@@ -27,7 +27,7 @@ import knobtable  # noqa: E402
 import overlay  # noqa: E402
 
 # tools that only read or play: no 'hands off' banner for these
-QUIET = {'fl_status', 'fl_doctor', 'fl_mixer_get', 'fl_channels_get', 'fl_patterns_get', 'fl_browser_list', 'fl_bbcso_list',
+QUIET = {'fl_status', 'fl_doctor', 'fl_reference', 'fl_muse_render', 'fl_mixer_get', 'fl_channels_get', 'fl_patterns_get', 'fl_browser_list', 'fl_bbcso_list',
          'fl_plugin_params', 'fl_mixer_effects', 'fl_windows', 'fl_snapshot', 'fl_api', 'fl_write_midi',
          'fl_read_window', 'fl_transport'}
 
@@ -566,6 +566,40 @@ def automation(a):
     raise ValueError('unknown action')
 
 
+def reference(a):
+    """Optional Reference Ears: run tools/reference_ears/refears.py in its own Python environment."""
+    import base64
+    import subprocess
+    re_cfg = config.get('reference_ears') or {}
+    py = re_cfg.get('python')
+    if not py or not os.path.isfile(py):
+        raise BridgeError('Reference Ears is optional and not set up: see tools/reference_ears/README.md, then set '
+                          '"reference_ears": {"python": ...} in %s' % config.CONFIG_FILE)
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'reference_ears',
+                          'refears.py')
+    cmd = [py, script, a['song'], '--json-only']
+    for k in ('start', 'end', 'focus', 'ask', 'vibe_ref'):
+        if a.get(k):
+            cmd += ['--' + k.replace('_', '-'), str(a[k])]
+    for k in ('no_ai', 'no_split', 'no_vibe'):
+        if a.get(k):
+            cmd.append('--' + k.replace('_', '-'))
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
+                       timeout=int(re_cfg.get('timeout_seconds') or 1800), creationflags=0x08000000)
+    lines = [l for l in r.stdout.splitlines() if l.startswith('{')]
+    if r.returncode or not lines:
+        raise BridgeError('Reference Ears failed: %s' % ((r.stderr or r.stdout).strip().splitlines() or ['?'])[-1])
+    rep = json.loads(lines[-1])
+    md = os.path.join(rep['folder'], 'report.md')
+    out = {'report': open(md, encoding='utf-8').read() if os.path.exists(md) else None, 'folder': rep['folder'],
+           'midi': [ld.get('midi') for ld in rep.get('lead', {}).values() if ld.get('midi')]}
+    plots = [ld.get('plot') for ld in rep.get('lead', {}).values() if str(ld.get('plot', '')).endswith('.png')]
+    if plots and os.path.exists(plots[0]):
+        with open(plots[0], 'rb') as f:
+            out['_image'] = base64.b64encode(f.read()).decode('ascii')
+    return out
+
+
 def local_idea(a):
     """Optional local copilot: the local model writes the idea, musicgen fixes the theory, the notes go to FL."""
     import musicgen
@@ -690,6 +724,16 @@ TOOLS = [
     ('fl_local_idea', 'Optional local copilot (needs Ollama): the local model (local_ai.idea_model) writes a short piano idea for request (mood, key, tempo, chords, melody); music-theory code then fixes it (in-key triads, smooth voicing, melody on chord tones, no semitone clashes - refuses if any are left) and writes it into a channel\'s piano roll (default the selected channel; mode replace/add), sets the tempo (set_tempo, default true) and optionally plays it. write=false only returns the notes. Works offline. ~20-40 s.',
      {'request': STR, 'channel': INT, 'mode': {'type': 'string', 'enum': ['replace', 'add']}, 'set_tempo': BOOL,
       'play': BOOL, 'write': BOOL, 'seed': INT, 'model': STR}, ['request'], local_idea),
+    ('fl_reference', 'Optional Reference Ears (needs its own Python environment, see tools/reference_ears/README.md): listen to a reference song offline - song = audio file path, YouTube link or "Artist - Title" (downloaded with yt-dlp if allowed). Returns the report: tempo (+half/double), key, chords per section, sections with the parts playing, loudness, frequency balance, per-part shares; with start/end (m:ss) and/or focus (guitar, vocals, bass, piano, other, drums) also the lead line as notes + a .mid file (drag into the piano roll) + a plot image, bends, vibrato, scale, phrasing; plus the optional local listening AI (Qwen3-Omni via llama.cpp) and vibe check. HEAVY: the first run on a song splits it (several minutes on CPU) and the listening AI needs a big model in memory - tell the user before running it; no_split / no_ai / no_vibe make it lighter. Measured numbers are reliable; the AI words are a second opinion.',
+     {'song': STR, 'start': STR, 'end': STR, 'focus': {'type': 'string', 'enum': ['guitar', 'vocals', 'bass', 'piano', 'other', 'drums', 'mix']},
+      'ask': STR, 'no_ai': BOOL, 'no_split': BOOL, 'no_vibe': BOOL, 'vibe_ref': STR}, ['song'], reference),
+    ('fl_muse_render','Optional orchestral route (needs MuseScore Studio 4 + Muse Sounds): write parts as MusicXML (slurs for legato, dynamics, tempo map for rubato), render each part with Muse Sounds through MuseScore\'s command line, and either keep one WAV stem per part from bar 1 (mode stems: put them on playlist tracks at bar 1) or cut them into phrase clips plus an SFZ map for sfizz (mode clips: one key per clip). parts: [{instrument (violin, viola, cello, contrabass, flute, oboe, clarinet, bass clarinet, bassoon, soprano sax, alto sax, tenor sax, baritone sax, horn, trumpet, trombone, bass trombone, tuba), name, dynamic (pp..ff), legato (default true), notes [{pitch (concert MIDI), start, length} in beats], phrases [[start_beat, end_beat]] for clips}]. Also name, bpm, time_signature [4,4], tempo_map [[beat, bpm]], key_fifths. Takes ~20-60 s per part. spec_file loads a whole spec from JSON (relative to the bridge folder), e.g. spec_file=examples/muse_chorale.json.',
+     {'name': STR, 'bpm': NUM, 'time_signature': {'type': 'array', 'items': INT}, 'tempo_map': {'type': 'array'},
+      'key_fifths': INT, 'mode': {'type': 'string', 'enum': ['stems', 'clips']}, 'parts': {'type': 'array'},
+      'out_dir': STR, 'spec_file': STR}, [],
+     lambda a: __import__('muse').run(json.load(open(a['spec_file'] if os.path.isabs(a['spec_file']) else os.path.join(
+         os.path.dirname(os.path.dirname(os.path.abspath(__file__))), a['spec_file']), encoding='utf-8'))
+         if a.get('spec_file') else a)),
     ('fl_project', 'Projects without Open/Save dialogs. new: copy an FL template (default "Empty": no stock channels) to <projects_dir>\\<name>\\<name>.flp (projects_dir from config.json; default Documents\\Image-Line\\FL Studio\\Projects; or pass folder) and open it, so fl_save then saves there. open: open a .flp (restarts FL cleanly). close / start FL. templates: list template names. unsaved: refuse (default) / save / discard when FL has unsaved changes.',
      {'action': {'type': 'string', 'enum': ['new', 'open', 'close', 'start', 'templates']}, 'name': STR, 'path': STR,
       'template': STR, 'folder': STR, 'unsaved': {'type': 'string', 'enum': ['refuse', 'save', 'discard']}},

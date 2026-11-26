@@ -33,7 +33,7 @@ if ($hash -ne $PythonSha256.ToUpper()) { Remove-Item $zip; throw "Python zip che
 # 3. stage the files that ship (an allow-list: nothing personal or generated gets in)
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Force $stage | Out-Null
-foreach ($d in "server", "fl_script", "tools", "docs", "tests") {
+foreach ($d in "server", "fl_script", "tools", "docs", "tests", "examples") {
     Copy-Item (Join-Path $repo $d) (Join-Path $stage $d) -Recurse
 }
 foreach ($f in "README.md", "LICENSE", "CHANGELOG.md", "config.example.json", "kit.example.json") {

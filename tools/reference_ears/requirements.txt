@@ -1,0 +1,16 @@
+# Reference Ears (optional). Use a separate Python 3.10-3.12 environment, e.g.
+#   python -m venv "%LOCALAPPDATA%\claude-fl-studio-bridge\reference-ears\env"
+#   ...\env\Scripts\python.exe -m pip install -r tools\reference_ears\requirements.txt
+# then set "reference_ears": {"python": "...\\env\\Scripts\\python.exe"} in config.json.
+numpy
+soundfile            # BSD-3 (libsndfile LGPL-2.1+)
+librosa              # ISC
+pyloudnorm           # MIT
+mido                 # MIT
+matplotlib           # PSF-style
+torch                # BSD-3 (CPU build is enough for Demucs)
+demucs               # MIT (weights are downloaded by Demucs on first use)
+basic-pitch[onnx]    # Apache-2.0
+onnxruntime          # MIT
+yt-dlp               # Unlicense - optional, only for fetching songs (also needs ffmpeg on PATH)
+# optional quality model:   audiobox_aesthetics   (CC-BY-4.0)

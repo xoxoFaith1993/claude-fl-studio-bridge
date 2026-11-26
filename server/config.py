@@ -59,6 +59,22 @@ DEFAULTS = {
         'idea_model': 'qwen3-vl:8b-instruct',  # writes musical ideas for fl_local_idea (any chat model works)
         'read_stuck_dialogs': True,            # when FL is blocked by a popup, read it with vision_model and say what it is
     },
+    # optional orchestral route (fl_muse_render): MuseScore Studio 4 + Muse Sounds
+    'muse': {
+        'musescore_exe': None,                 # null = auto-detect (Program Files\\MuseScore 4)
+        'out_dir': None,                       # null = %LOCALAPPDATA%\\claude-fl-studio-bridge\\muse
+    },
+    # optional Reference Ears (fl_reference): see tools/reference_ears/README.md
+    'reference_ears': {
+        'python': None,                        # python.exe of the environment with its packages (requirements.txt)
+        'data_dir': None,                      # null = %LOCALAPPDATA%\\claude-fl-studio-bridge\\reference-ears
+        'llama_dir': None,                     # folder with llama.cpp's llama-mtmd-cli.exe (listening AI, optional)
+        'omni_model': 'Qwen3-Omni-30B-A3B-Instruct-Q4_K_M.gguf',
+        'omni_mmproj': 'mmproj-Qwen3-Omni-30B-A3B-Instruct-Q8_0.gguf',
+        'llama_args': ['-ngl', '99'],          # extra llama.cpp args (GPU layers etc.)
+        'fetch': 'yt-dlp',                     # 'yt-dlp' (search/links, needs yt-dlp + ffmpeg) or 'files' (local files only)
+        'timeout_seconds': 1800,
+    },
     # pixel positions inside FL windows, measured on FL Studio 2026 (26.1) at 100% scaling.
     # If a hands-off tool misses its target on your PC, re-measure with fl_snapshot and change it here.
     # See docs/CALIBRATION.md.
@@ -88,7 +104,7 @@ def _merge(base, extra, path=''):
         if isinstance(v, dict) and isinstance(base.get(k), dict):
             _merge(base[k], v, path + k + '.')
         else:
-            if isinstance(v, str) and (k.endswith('_dir') or k.endswith('_exe') or k == 'fl_user_data'):
+            if isinstance(v, str) and (k.endswith('_dir') or k.endswith('_exe') or k in ('fl_user_data', 'python')):
                 v = os.path.expandvars(v)          # "%USERPROFILE%\\Music" etc.
             base[k] = v
             _SOURCES[path + k] = 'config.json'

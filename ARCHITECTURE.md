@@ -24,6 +24,8 @@
 | `server/config.py` | All settings: defaults, auto-detection, `config.json`, env vars, calibration. |
 | `server/doctor.py` | `fl_doctor`: ordered read-only checks of the whole chain with a plain fix per problem (also `tools/doctor.py`). Failing tools point to it, and a popup blocking FL is read by the local vision model when available. |
 | `server/ollama_ctl.py`, `ollama_guard.py` | Optional local AI: start Ollama on demand, stop it after FL closes (only if the bridge started it). |
+| `server/muse.py` | `fl_muse_render`: MusicXML writer (ties across bars and tempo marks, slurs, dynamics, transposing instruments), MuseScore CLI render, clip cutting on the shared timeline, SFZ maps. |
+| `tools/reference_ears/` | Reference Ears (run in its own Python by `fl_reference`): `refears.py` (split, measure, lead line, listen, report), `vibe.py`, `fetch.py` (yt-dlp), `get_models.py` (licence-first downloads). |
 | `server/musicgen.py` | Local copilot behind `fl_local_idea`: asks the local model for an idea, then fixes the music theory and refuses any semitone clash. |
 | `server/browser.py`, `pianoroll.py`, `playlist_place.py`, `automation_clip.py`, `export.py`, `render.py`, `knobtable.py`/`knobset.py`, `kits.py`, `bbcso.py`, `ollama_eyes.py` | One feature each (see [docs/TOOLS.md](docs/TOOLS.md)). |
 
@@ -84,6 +86,7 @@ python -c "import sys; sys.path.insert(0,'server'); import server; print(server.
 
 `python tests/test_loopback.py` runs the whole protocol against fake FL modules (no FL or MIDI needed).
 `python tests/test_doctor.py` checks the doctor's diagnosis with fake ports and FL states, and
-`python tests/test_musicgen.py` checks the theory fixer on a messy idea. None of the three need FL, MIDI or Ollama.
+`python tests/test_musicgen.py` checks the theory fixer on a messy idea, and `python tests/test_muse.py`
+checks the MusicXML writer, tempo maps, clip cutting and SFZ maps. None of these tests need FL, MIDI, Ollama or MuseScore.
 Anything that touches FL's windows needs a real FL. Please say in your PR what you tested by hand, on which FL
 version.

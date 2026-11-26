@@ -35,16 +35,15 @@ you can see and change everything it did. It's a two-way bridge, not a one-shot 
 - **A built-in doctor:** `fl_doctor` (or `python tools\doctor.py`) checks every link from Claude to FL: MIDI
   ports, the FL scripts, FL itself, port settings, popups, screen scaling, hooks and the local AI. It says in plain
   words what's wrong and how to fix it, so a problem gets explained instead of the bridge just timing out.
-- **Optional local AI (Ollama), fully offline:**
-  - `fl_local_idea`: a local model writes a piano idea, and music-theory code fixes it before anything reaches FL
-    (in-key chords, smooth voicing, melody on chord tones, no clashing notes).
-  - `fl_read_window`: a local vision model reads FL popups.
-  - When FL is stuck on a popup, the bridge reads it and tells Claude what it says.
-  - Ollama starts only when one of these tools needs it, and stops again after FL closes. It only stops an
-    Ollama the bridge started itself.
+- **Local AI, fully offline** (recommended extra): Claude reads FL's dialogs and plugin windows with a local
+  vision model, a local model writes theory-checked ideas into the piano roll (`fl_local_idea`), and **Reference
+  Ears** (`fl_reference`) listens to a reference song: tempo, key, chords, sections, parts, and the lead line as
+  MIDI, plus a local listening AI's description.
+- **Orchestral route with Muse Sounds** (recommended extra): `fl_muse_render` turns parts into MusicXML, renders
+  them with Muse Sounds in MuseScore Studio, and brings them back as stems or sfizz-triggered clips.
 - **Anything else:** `fl_exec` runs Python inside FL with all of FL's scripting modules.
 
-The full list of 40 tools is in [docs/TOOLS.md](docs/TOOLS.md).
+The full list of 42 tools is in [docs/TOOLS.md](docs/TOOLS.md).
 
 ## How it works (short version)
 
@@ -61,17 +60,53 @@ clicks to FL's windows and checking the result. More detail, and how to add a to
 
 ## What you need
 
-| | | |
-|---|---|---|
-| Windows 10 or 11 | | the bridge uses Windows APIs (WinMM MIDI, window messages) |
-| [FL Studio](https://www.image-line.com/) | proprietary, not included | FL 2024 or newer is best (piano-roll scripts, Browser, `plugins` module). FL 20.7+ works with fewer tools. |
-| Two virtual MIDI ports | | [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) (freeware for private, non-commercial use; closed source; not bundled), or the open-source **Windows MIDI Services** loopback endpoints on recent Windows 11 (untested so far: [docs/SETUP.md](docs/SETUP.md#option-b-windows-midi-services)) |
-| [Claude Code](https://claude.com/claude-code) or another MCP client | | |
-| Python 3.10+ | bundled by the installer | the server uses only the standard library |
+### Required
 
-Optional extras: [Ollama](https://ollama.com) with a model such as `qwen3-vl:8b-instruct` for the local AI tools (`fl_local_idea`, `fl_read_window`, reading stuck popups), `numpy` for the
-render loudness check, and Spitfire's free BBC Symphony Orchestra Discover for the `fl_bbcso_*` tools.
-Licences and links for each are in [docs/PREREQUISITES.md](docs/PREREQUISITES.md).
+| | |
+|---|---|
+| Windows 10 or 11 | the bridge uses Windows APIs (WinMM MIDI, window messages) |
+| [FL Studio](https://www.image-line.com/) | proprietary, not included. FL 2024 or newer is best; FL 20.7+ works with fewer tools |
+| Two virtual MIDI ports | [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) (freeware for private use, not bundled) or the open-source Windows MIDI Services loopback endpoints ([docs/SETUP.md](docs/SETUP.md)) |
+| [Claude Code](https://claude.com/claude-code) or another MCP client | |
+| Python 3.10+ | bundled by the installer; the bridge itself uses only the standard library |
+
+### Recommended extras
+
+These are not required, but they're a big part of how the bridge is used day to day.
+
+**Local AI: the heart of working offline.** "Local AI" here means models running on your own GPU, with nothing
+sent anywhere. Two engines do different jobs:
+
+| Extra | Engine | What you get |
+|---|---|---|
+| A vision model such as `qwen3-vl:8b-instruct` | [Ollama](https://ollama.com) (MIT) | **Claude can read FL's dialogs and plugin windows offline** (`fl_read_window`). When FL is stuck on a popup, the bridge reads it and says what it is, instead of just timing out. |
+| The same or any chat model | Ollama | **`fl_local_idea`:** the local model writes a piano idea (key, chords, melody), music-theory code fixes it (in-key chords, smooth voicing, no clashing notes), and it lands in the piano roll. No Claude needed for the idea itself. |
+| [Reference Ears](tools/reference_ears/README.md) | Demucs + Basic Pitch + librosa; listening AI **Qwen3-Omni via [llama.cpp](https://github.com/ggml-org/llama.cpp)** (not Ollama) | **`fl_reference`:** Claude hears a reference song. You get tempo, key, chords, sections and who plays where, plus the lead line as a `.mid` with bends and vibrato. A local listening AI describes tone, feel and playing technique. |
+
+Ollama starts only when one of the Ollama tools needs it, and stops again after FL Studio (and the sister Krita
+bridge) close. It only ever stops an Ollama the bridge started itself.
+
+**Muse Sounds: the orchestral route.** `fl_muse_render` writes parts as MusicXML (slurs for real legato,
+dynamics, a tempo map for rubato). [MuseScore Studio 4](https://musescore.org) renders them with **Muse Sounds**,
+and the bridge either drops one stem per part on the playlist from bar 1, or cuts phrase clips and maps them to
+keys in [sfizz](https://sfz.tools/sfizz/) so FL triggers each clip with one note. The result is far more realistic
+strings, winds and brass than General MIDI or most free sample sets.
+
+| Extra | Licence | |
+|---|---|---|
+| MuseScore Studio 4 | GPL-3.0, open source | renders the parts on the command line |
+| Muse Sounds (via Muse Hub) | free, **closed source**, not bundled | the instrument sounds themselves |
+| sfizz | BSD-2-Clause, open source | plays the cut clips inside FL (it stops a clip on note-off; FL's Sampler doesn't) |
+
+### Optional nice-to-haves
+
+- `numpy`: adds the loudness / true-peak check to `fl_render`.
+- Spitfire's free [BBC Symphony Orchestra Discover](https://www.spitfireaudio.com/bbc-symphony-orchestra-discover/):
+  the `fl_bbcso_*` tools load its instruments and articulations.
+- Reference Ears' optional **vibe check** models: Audiobox Aesthetics (CC-BY-4.0), and the Essentia style model,
+  which is **non-commercial only** and is an opt-in download.
+
+Licences and links for everything: [docs/PREREQUISITES.md](docs/PREREQUISITES.md).
 
 ## Install
 

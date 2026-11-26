@@ -5,12 +5,16 @@ All notable changes. Versions follow [semantic versioning](https://semver.org/);
 ## [0.1.0] - 2026-11-25
 First public release (work in progress).
 
-- MCP server with 40 tools: transport, tempo, mixer, channel rack, step sequencer, patterns, plugin parameters
+- MCP server with 42 tools: transport, tempo, mixer, channel rack, step sequencer, patterns, plugin parameters
   and presets, Browser loading, piano roll read/write, playlist clips, automation clips (volume, sidechain
   pumps), display-value knobs, projects without dialogs, rendering with a loudness check, window tools
   (list, snapshot, click, key, file dialog), optional local vision reader, BBC SO Discover helpers, `fl_exec`.
 - `fl_doctor` / `tools/doctor.py`: checks the whole chain and explains each problem with a fix; failing tools point to it.
 - Optional local AI (Ollama): `fl_local_idea` (local model + music-theory fixer, no clashing notes), `fl_read_window`, popups read automatically when FL is stuck; Ollama starts on demand and stops after FL closes (only if the bridge started it).
+- `fl_muse_render`: the orchestral route - MusicXML (slurs, dynamics, tempo map) -> MuseScore Studio + Muse Sounds
+  -> stems from bar 1, or phrase clips + an SFZ map for sfizz.
+- `fl_reference` / `tools/reference_ears`: Reference Ears listens to a reference song (tempo, key, chords,
+  sections, parts, lead line as MIDI) with an optional local listening AI (Qwen3-Omni via llama.cpp) and vibe check.
 - `fl_automation create_pan`: pan automation clips.
 - `fl_drum_kit` loads your own kit from `kit.json`.
 - Configurable "hands off" banner (default "Chill bro, let me solo her...") with Claude Code hooks.
